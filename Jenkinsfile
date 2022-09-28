@@ -142,9 +142,11 @@ pipeline {
 			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework
 			  rm ${BUILDPATH}/Workspace/Framework/*_test.py
 			  
-			  #cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality
-			  #cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault
+			  cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality
+			  rm ${BUILDPATH}/Workspace/DataQuality/*_test.py
 			  
+			  cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault
+			  rm ${BUILDPATH}/Workspace/DataVault/*_test.py
 			  
 			  # Get packaged libs
 			  
@@ -202,10 +204,12 @@ pipeline {
 				databricks workspace mkdirs ${WORKSPACEPATH}
 				#databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
 				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework ${WORKSPACEPATH}/Framework
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality ${WORKSPACEPATH}/DataQuality
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault ${WORKSPACEPATH}/DataVault
 				
 				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
-				#dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
-				#dbfs cp -r ${BUILDPATH}/DataValut ${DBFSPATH}
+				dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
+				dbfs cp -r ${BUILDPATH}/DataValut ${DBFSPATH}
 				dbfs cp -r ${BUILDPATH}/Framework ${DBFSPATH}
 				
 				"""
