@@ -19,7 +19,7 @@ pipeline {
 	NOTEBOOKPATH    = "${GITREPO}"
 	
     WORKSPACEPATH   = "/Demo-notebooks"               //"/Shared"
-    Notebookpath1 =  "${WORKSPACE}/Data Quality"
+   
     DBFSPATH        = "dbfs:/FileStore/"
     BUILDPATH       = "${WORKSPACE}/Builds/${env.JOB_NAME}-${env.BUILD_NUMBER}"
     SCRIPTPATH      = "${GITREPO}/Scripts"
@@ -138,9 +138,9 @@ pipeline {
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace
 			  
-			  #cp "${WORKSPACE}/Data Quality/*.py" ${BUILDPATH}/Workspace
-			  cp  Notebookpath1/*.py ${BUILDPATH}/Workspace 
-			  cp "${WORKSPACE}/Data Vault"/*.py ${BUILDPATH}/Workspace
+			  #cp ${WORKSPACE}/"Data_Quality"/*.py ${BUILDPATH}/Workspace
+			   
+			  cp "${WORKSPACE}/Data_Vault"/*.py ${BUILDPATH}/Workspace
 			  # Get packaged libs
 			  
 			  
