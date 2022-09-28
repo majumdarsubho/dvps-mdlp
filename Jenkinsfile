@@ -195,14 +195,13 @@ pipeline {
 				export PATH="$HOME/.local/bin:$PATH"
 				# Use Databricks CLI to deploy notebooks
 				databricks workspace mkdirs ${WORKSPACEPATH}
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault/*.py ${WORKSPACEPATH}/Data Vault/*.py 
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality/*.py ${WORKSPACEPATH}/Data quality/*.py 
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework/*.py ${WORKSPACEPATH}/Framework/*.py 
+				#databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
+				databricks workspace import_dir --overwrite ${BUILDPATH}/DataQuality ${WORKSPACEPATH}/DataQuality
 				
 				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
 				dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
-				dbfs cp -r ${BUILDPATH}/DataValut ${DBFSPATH}
-				dbfs cp -r ${BUILDPATH}/Framework ${DBFSPATH}
+				#dbfs cp -r ${BUILDPATH}/DataValut ${DBFSPATH}
+				#dbfs cp -r ${BUILDPATH}/Framework ${DBFSPATH}
 				
 				"""
 				slackSend color: '#BADA55', message:'Pipeline Databricks Deploy Done'
