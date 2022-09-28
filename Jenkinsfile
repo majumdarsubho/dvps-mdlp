@@ -136,9 +136,9 @@ pipeline {
 			  mkdir -p "${BUILDPATH}/Validation/Output"
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
-			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace
-			  cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace
-			  cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace
+			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework/*.py
+			  cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality/*.py
+			  cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault/*.py
 			  
 			  
 			  # Get packaged libs
@@ -174,8 +174,8 @@ pipeline {
                                     sh ''' 
 				       pip install coverage
 		    		       pip install pytest-cov
-		    		       pytest --cov=${projectName}/Framework/  --junitxml=./XmlReport/output.xml 
-                                       python -m coverage xml
+		    		       #pytest --cov=${projectName}/Framework/  --junitxml=./XmlReport/output.xml 
+                                       #python -m coverage xml
 				       
 				       '''
 				    
@@ -195,7 +195,10 @@ pipeline {
 				export PATH="$HOME/.local/bin:$PATH"
 				# Use Databricks CLI to deploy notebooks
 				databricks workspace mkdirs ${WORKSPACEPATH}
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault/*.py ${WORKSPACEPATH}/DataVault/*.py -e /*_test.py
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality/*.py ${WORKSPACEPATH}/Dataquality/*.py -e /*_test.py
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework/*.py ${WORKSPACEPATH}/Framework/*.py -e /*_test.py
+				
 				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
 				dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
 				dbfs cp -r ${BUILDPATH}/DataValut ${DBFSPATH}
