@@ -129,25 +129,23 @@ pipeline {
 		    sh """mkdir -p "${BUILDPATH}/Workspace"
 			
 			  
-			  mkdir -p "${BUILDPATH}/Data Quality"
-			  mkdir -p "${BUILDPATH}/Data Vault"
+			  mkdir -p "${BUILDPATH}/DataQuality"
+			  mkdir -p "${BUILDPATH}/DataVault"
 			  mkdir -p "${BUILDPATH}/Framework"
 			  
 			  mkdir -p "${BUILDPATH}/Validation/Output"
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace
+			  cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace
+			  cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace
 			  
-			  #cp ${WORKSPACE}/Data Quality/*.py ${BUILDPATH}/Workspace
-			  cp '/var/lib/jenkins/workspace/MDLPPipeline/Data Quality/*.py' ${BUILDPATH}/Workspace
-			  cp '/var/lib/jenkins/workspace/MDLPPipeline/Data Vault/*.py' ${BUILDPATH}/Workspace
 			  
-			  #cp "${WORKSPACE}/Data_Vault"/*.py ${BUILDPATH}/Workspace
 			  # Get packaged libs
 			  
 			  
-			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/Data Quality
-			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/Data Vault
+			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataQuality
+			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataVault
 			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/Framework
 			  
 			  # Generate artifact
@@ -198,7 +196,11 @@ pipeline {
 				# Use Databricks CLI to deploy notebooks
 				databricks workspace mkdirs ${WORKSPACEPATH}
 				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
-				dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
+				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
+				dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
+				dbfs cp -r ${BUILDPATH}/DataValut ${DBFSPATH}
+				dbfs cp -r ${BUILDPATH}/Framework ${DBFSPATH}
+				
 				"""
 				slackSend color: '#BADA55', message:'Pipeline Databricks Deploy Done'
 				slackSend color: '#FF0000', message:' Databricks Pipeline Deployment Finished', iconEmoji: ":white_check_mark:"
