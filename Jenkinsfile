@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent any 
 
   environment {
     
@@ -140,15 +140,17 @@ pipeline {
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework
-			  cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality
-			  cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault
+			  rm ${BUILDPATH}/Workspace/Framework/*_test.py
+			  
+			  #cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality
+			  #cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault
 			  
 			  
 			  # Get packaged libs
 			  
 			  
-			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataQuality
-			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataVault
+			  #find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataQuality
+			  #find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataVault
 			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/Framework
 			  
 			  # Generate artifact
@@ -199,12 +201,12 @@ pipeline {
 				# Use Databricks CLI to deploy notebooks
 				databricks workspace mkdirs ${WORKSPACEPATH}
 				#databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework ${WORKSPACEPATH}/Framework
 				
 				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
-				dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
+				#dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
 				#dbfs cp -r ${BUILDPATH}/DataValut ${DBFSPATH}
-				#dbfs cp -r ${BUILDPATH}/Framework ${DBFSPATH}
+				dbfs cp -r ${BUILDPATH}/Framework ${DBFSPATH}
 				
 				"""
 				slackSend color: '#BADA55', message:'Pipeline Databricks Deploy Done'
