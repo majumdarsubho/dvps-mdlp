@@ -138,9 +138,11 @@ pipeline {
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace
 			  
-			  #cp ${WORKSPACE}/"Data_Quality"/*.py ${BUILDPATH}/Workspace
-			   
-			  cp "${WORKSPACE}/Data_Vault"/*.py ${BUILDPATH}/Workspace
+			  #cp ${WORKSPACE}/Data Quality/*.py ${BUILDPATH}/Workspace
+			  cp '/var/lib/jenkins/workspace/MDLPPipeline/Data Quality/*.py' ${BUILDPATH}/Workspace
+			  cp '/var/lib/jenkins/workspace/MDLPPipeline/Data Vault/*.py' ${BUILDPATH}/Workspace
+			  
+			  #cp "${WORKSPACE}/Data_Vault"/*.py ${BUILDPATH}/Workspace
 			  # Get packaged libs
 			  
 			  
