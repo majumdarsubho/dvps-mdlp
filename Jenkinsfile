@@ -159,7 +159,7 @@ pipeline {
 
 	}
 	  
-	stage('SonarQube analysis') {
+	stage('SonarQube Analysis') {
 		  steps {
 		    //def scannerhome = tool name: 'SonarQubeScanner'
 
