@@ -195,9 +195,9 @@ pipeline {
 				export PATH="$HOME/.local/bin:$PATH"
 				# Use Databricks CLI to deploy notebooks
 				databricks workspace mkdirs ${WORKSPACEPATH}
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault/*.py ${WORKSPACEPATH}/DataVault/*.py -e /*_test.py
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality/*.py ${WORKSPACEPATH}/Dataquality/*.py -e /*_test.py
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework/*.py ${WORKSPACEPATH}/Framework/*.py -e /*_test.py
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault/*.py ${WORKSPACEPATH}/DataVault/*.py 
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality/*.py ${WORKSPACEPATH}/Dataquality/*.py 
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework/*.py ${WORKSPACEPATH}/Framework/*.py 
 				
 				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
 				dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
