@@ -128,6 +128,9 @@ pipeline {
 			
 		    sh """mkdir -p "${BUILDPATH}/Workspace"
 			
+			  mkdir -p "${BUILDPATH}/Workspace/DataQuality
+			  mkdir -p "${BUILDPATH}/Workspace/DataVault
+			  mkdir -p "${BUILDPATH}/Workspace/Framework
 			  
 			  mkdir -p "${BUILDPATH}/DataQuality"
 			  mkdir -p "${BUILDPATH}/DataVault"
@@ -136,9 +139,9 @@ pipeline {
 			  mkdir -p "${BUILDPATH}/Validation/Output"
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
-			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace
-			  cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace
-			  cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace
+			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/DataQuality
+			  cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataVault
+			  cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/Framework
 			  
 			  
 			  # Get packaged libs
@@ -196,7 +199,7 @@ pipeline {
 				# Use Databricks CLI to deploy notebooks
 				databricks workspace mkdirs ${WORKSPACEPATH}
 				#databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
-				databricks workspace import_dir --overwrite ${BUILDPATH}/DataQuality ${WORKSPACEPATH}/DataQuality
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
 				
 				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
 				dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
