@@ -128,9 +128,9 @@ pipeline {
 			
 		    sh """mkdir -p "${BUILDPATH}/Workspace"
 			
-			  mkdir -p "${BUILDPATH}/Workspace/DataQuality
-			  mkdir -p "${BUILDPATH}/Workspace/DataVault
-			  mkdir -p "${BUILDPATH}/Workspace/Framework
+			  mkdir -p "${BUILDPATH}/Workspace/DataQuality"
+			  mkdir -p "${BUILDPATH}/Workspace/DataVault"
+			  mkdir -p "${BUILDPATH}/Workspace/Framework"
 			  
 			  mkdir -p "${BUILDPATH}/DataQuality"
 			  mkdir -p "${BUILDPATH}/DataVault"
