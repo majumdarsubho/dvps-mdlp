@@ -151,7 +151,7 @@ pipeline {
 			  
 			  #find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataQuality
 			  #find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/DataVault
-			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/Framework
+			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}
 			  
 			  # Generate artifact
 			  #tar -czvf Builds/latest_build.tar.gz ${BUILDPATH}
