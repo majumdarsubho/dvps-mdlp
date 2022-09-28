@@ -124,8 +124,9 @@ pipeline {
 		
 	stage('Build') {
 		steps {
+			
 		    sh """mkdir -p "${BUILDPATH}/Workspace"
-			  //mkdir -p "${BUILDPATH}/Libraries/python"
+			
 			  
 			  mkdir -p "${BUILDPATH}/Data Quality"
 			  mkdir -p "${BUILDPATH}/Data Vault"
@@ -134,9 +135,9 @@ pipeline {
 			  mkdir -p "${BUILDPATH}/Validation/Output"
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
-			  cp ${WORKSPACE}/Notebooks/*.py ${BUILDPATH}/Workspace
+			  cp ${WORKSPACE}/*.py ${BUILDPATH}/Workspace
 			  # Get packaged libs
-			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/Libraries/python/
+			  
 			  
 			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/Data Quality
 			  find ${LIBRARYPATH} -name '*.whl' | xargs -I '{}' cp '{}' ${BUILDPATH}/Data Vault
