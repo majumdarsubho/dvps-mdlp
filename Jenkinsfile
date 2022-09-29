@@ -136,7 +136,7 @@ pipeline {
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  
-			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude '*_test.py' --exclude '.git' --exclude '.pytest_cache' --exclude '.scannerwork' ${WORKSPACE}/  ${BUILDPATH}/Workspace/ 
+			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude 'XMLReport' --exclude '*_test.py' --exclude '.git' --exclude '.pytest_cache' --exclude '.scannerwork' ${WORKSPACE}/  ${BUILDPATH}/Workspace/ 
 			  #cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework
 			  
 			  ##cp ${WORKSPACE}/Framework/*.* ${BUILDPATH}/Workspace/Framework	  
