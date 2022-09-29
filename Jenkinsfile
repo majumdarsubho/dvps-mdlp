@@ -212,9 +212,6 @@ pipeline {
 				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault ${WORKSPACEPATH}/DataVault
 				
 				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
-				dbfs cp -r ${BUILDPATH}/DataQuality ${DBFSPATH}
-				dbfs cp -r ${BUILDPATH}/DataValut ${DBFSPATH}
-				dbfs cp -r ${BUILDPATH}/Framework ${DBFSPATH}
 				
 				"""
 				slackSend color: '#BADA55', message:'Pipeline Databricks Deploy Done'
