@@ -194,6 +194,15 @@ pipeline {
 
 		}
         }
+	  
+	stage('Report Test Results') {
+		steps{
+		  sh """find ${OUTFILEPATH} -name '*.json' -exec gzip --verbose {} \\;
+			touch ${TESTRESULTPATH}/TEST-*.xml
+		     """
+		  junit "**/reports/junit/*.xml"
+		}
+	}
    
 	stage('Databricks Deploy') {
 		 steps {
@@ -217,17 +226,6 @@ pipeline {
 				slackSend color: '#FF0000', message:' Databricks Pipeline Deployment Finished', iconEmoji: ":white_check_mark:"
 		    	}
 		 }
-	}
-	
-	
-	  
-	stage('Report Test Results') {
-		steps{
-		  sh """find ${OUTFILEPATH} -name '*.json' -exec gzip --verbose {} \\;
-			touch ${TESTRESULTPATH}/TEST-*.xml
-		     """
-		  junit "**/reports/junit/*.xml"
-		}
 	}
 	  
   }
