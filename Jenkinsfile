@@ -128,25 +128,27 @@ pipeline {
 			
 		    sh """mkdir -p "${BUILDPATH}/Workspace"
 			
-			  mkdir -p "${BUILDPATH}/Workspace/DataQuality"
-			  mkdir -p "${BUILDPATH}/Workspace/DataVault"
-			  mkdir -p "${BUILDPATH}/Workspace/Framework"
+			  #mkdir -p "${BUILDPATH}/Workspace/DataQuality"
+			  #mkdir -p "${BUILDPATH}/Workspace/DataVault"
+			  #mkdir -p "${BUILDPATH}/Workspace/Framework"
 			  
 			  mkdir -p "${BUILDPATH}/Validation/Output"
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
+			  
+			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude 'XmlReport' --exclude '*_test.py'  ${WORKSPACE}/  ${BUILDPATH}/Workspace/ 
 			  #cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework
 			  
-			  cp ${WORKSPACE}/Framework/*.* ${BUILDPATH}/Workspace/Framework	  
-			  rm -f ${BUILDPATH}/Workspace/Framework/*_test.py
+			  ##cp ${WORKSPACE}/Framework/*.* ${BUILDPATH}/Workspace/Framework	  
+			  ##rm -f ${BUILDPATH}/Workspace/Framework/*_test.py
 			  
 			  #cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality
-			  cp ${WORKSPACE}/DataQuality/*.*  ${BUILDPATH}/Workspace/DataQuality
-			  rm -f ${BUILDPATH}/Workspace/DataQuality/*_test.py
+			  ##cp ${WORKSPACE}/DataQuality/*.*  ${BUILDPATH}/Workspace/DataQuality
+			  ##rm -f ${BUILDPATH}/Workspace/DataQuality/*_test.py
 			  
 			  #cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault
-			  cp ${WORKSPACE}/DataVault/*.* ${BUILDPATH}/Workspace/DataVault
-			  rm -f ${BUILDPATH}/Workspace/DataVault/*_test.py
+			  ##cp ${WORKSPACE}/DataVault/*.* ${BUILDPATH}/Workspace/DataVault
+			  ##rm -f ${BUILDPATH}/Workspace/DataVault/*_test.py
 			  
 			  # Get packaged libs
 			  
@@ -202,10 +204,11 @@ pipeline {
 				export PATH="$HOME/.local/bin:$PATH"
 				# Use Databricks CLI to deploy notebooks
 				databricks workspace mkdirs ${WORKSPACEPATH}
-				#databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace ${WORKSPACEPATH}
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework ${WORKSPACEPATH}/Framework
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality ${WORKSPACEPATH}/DataQuality
-				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault ${WORKSPACEPATH}/DataVault
+				#databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/ ${WORKSPACEPATH}
+				
+				##databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework ${WORKSPACEPATH}/Framework
+				##databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality ${WORKSPACEPATH}/DataQuality
+				##databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataVault ${WORKSPACEPATH}/DataVault
 				
 				#dbfs cp -r ${BUILDPATH}/Libraries/python ${DBFSPATH}
 				
