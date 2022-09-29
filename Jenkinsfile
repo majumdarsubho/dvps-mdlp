@@ -132,10 +132,6 @@ pipeline {
 			  mkdir -p "${BUILDPATH}/Workspace/DataVault"
 			  mkdir -p "${BUILDPATH}/Workspace/Framework"
 			  
-			  mkdir -p "${BUILDPATH}/DataQuality"
-			  mkdir -p "${BUILDPATH}/DataVault"
-			  mkdir -p "${BUILDPATH}/Framework"
-			  
 			  mkdir -p "${BUILDPATH}/Validation/Output"
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
