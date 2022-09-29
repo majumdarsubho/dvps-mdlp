@@ -139,13 +139,17 @@ pipeline {
 			  mkdir -p "${BUILDPATH}/Validation/Output"
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
-			  cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework
+			  #cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework
+			  
+			  cp ${WORKSPACE}/Framework ${BUILDPATH}/Workspace/Framework
 			  rm -f ${BUILDPATH}/Workspace/Framework/*_test.py
 			  
-			  cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality
+			  #cp ${WORKSPACE}/DataQuality/*.py ${BUILDPATH}/Workspace/DataQuality
+			  cp ${WORKSPACE}/DataQuality  ${BUILDPATH}/Workspace/DataQuality
 			  rm -f ${BUILDPATH}/Workspace/DataQuality/*_test.py
 			  
-			  cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault
+			  #cp ${WORKSPACE}/DataVault/*.py ${BUILDPATH}/Workspace/DataVault
+			  cp ${WORKSPACE}/DataVault ${BUILDPATH}/Workspace/DataVault
 			  rm -f ${BUILDPATH}/Workspace/DataVault/*_test.py
 			  
 			  # Get packaged libs
