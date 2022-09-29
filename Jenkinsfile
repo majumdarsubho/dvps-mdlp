@@ -204,7 +204,7 @@ pipeline {
 				export PATH="$HOME/.local/bin:$PATH"
 				# Use Databricks CLI to deploy notebooks
 				databricks workspace mkdirs ${WORKSPACEPATH}
-				#databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/ ${WORKSPACEPATH}
+				databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/ ${WORKSPACEPATH}
 				
 				##databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/Framework ${WORKSPACEPATH}/Framework
 				##databricks workspace import_dir --overwrite ${BUILDPATH}/Workspace/DataQuality ${WORKSPACEPATH}/DataQuality
