@@ -185,11 +185,12 @@ pipeline {
 				    sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=pipeline -Dsonar.projectVersion=0.0.3 -Dsonar.sources=${BUILDPATH}/Workspace/ -Dsonar.host.url=http://107.20.71.233:9001 -Dsonar.login=ab9d8f9c15baff5428b9bf18b0ec198a5b35c6bb -Dsonar.python.xunit.reportPath=tests/unit/junit.xml -Dsonar.python.coverage.reportPath=${WORKSPACE}/coverage.xml -Dsonar.python.coveragePlugin=cobertura -Dsonar.sonar.inclusions=**/*.ipynb,**/*.py -Dsonar.exclusions=**/*.ini,**./*.sh"  
 					
                                     sh ''' 
+				       pip install coverage-badge
 				       pip install coverage
 		    		       pip install pytest-cov
 		    		       pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
 				       python3.8 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${WORKSPACE}
-                                       python -m coverage xml
+                                       #python -m coverage xml
 				       
 				       '''
 				    
