@@ -138,8 +138,8 @@ pipeline {
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  
 			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude 'XmlReport' --exclude '*_test.py' --exclude '.git' --exclude '.pytest_cache' --exclude '.scannerwork' ${WORKSPACE}/  ${BUILDPATH}/Workspace/ 
-			  rm -f ${BUILDPATH}/Workspace/*/__pycache__
-			  find ${BUILDPATH}/Workspace/*/ -name '__pycache__' -delete
+			  rm -dr ${BUILDPATH}/Workspace/*/__pycache__
+			  #find ${BUILDPATH}/Workspace/*/ -name '__pycache__' -delete
 			  
 			  #cp ${WORKSPACE}/Framework/*.py ${BUILDPATH}/Workspace/Framework
 			  
