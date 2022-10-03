@@ -190,6 +190,8 @@ pipeline {
 				       pip install coverage
 		    		       pip install pytest-cov
 				      
+				      rm -dr ${BUILDPATH}/Workspace/*/__pycache__
+			              rm -f  ${BUILDPATH}/Workspace/*/*_test.py
 				      
 		    		      #pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
 				       		       
