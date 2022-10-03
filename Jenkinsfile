@@ -128,7 +128,7 @@ pipeline {
 		steps {
 			
 		    sh """mkdir -p "${BUILDPATH}/Workspace"
-			
+			  
 			  #mkdir -p "${BUILDPATH}/Workspace/DataQuality"
 			  #mkdir -p "${BUILDPATH}/Workspace/DataVault"
 			  #mkdir -p "${BUILDPATH}/Workspace/Framework"
@@ -137,7 +137,7 @@ pipeline {
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  
-			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile*' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude 'XmlReport' --exclude '*_test.py' --exclude '.git' --exclude '.pytest_cache' --exclude '.scannerwork' --exclude '*.pyc' ${WORKSPACE}/  ${BUILDPATH}/Workspace/ 
+			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile*' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude 'XmlReport' --exclude '*_test.py' --exclude '.git' --exclude '.pytest_cache' --exclude '.scannerwork' --exclude '*.pyc' ${WORKSPACE}/  ${BUILDPATH}/Workspace/
 			  rm -dr ${BUILDPATH}/Workspace/*/__pycache__
 			  #find ${BUILDPATH}/Workspace/*/ -name '__pycache__' -delete
 			  
@@ -188,11 +188,12 @@ pipeline {
 				       pip install coverage-badge
 				       pip install coverage
 		    		       pip install pytest-cov
-				      
+				      mkdir -p "${WORKSPACE}/CodeCov"
+				      cp ${BUILDPATH}/Workspace ${WORKSPACE}/CodeCov
 		    		      #pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
 				       
 				       #python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${BUILDPATH}/Workspace/
-				       python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${WORKSPACE}
+				       python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${WORKSPACE}/Codecov
                                        python -m coverage xml
 				       
 				       
