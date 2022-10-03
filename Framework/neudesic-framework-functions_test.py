@@ -2,7 +2,7 @@
 # MAGIC %run ./neudesic-framework-functions
 
 # COMMAND ----------
-
+import neudesic-framework-functions
 import unittest
 
 class TestNeudesicFrameworkFunctions(unittest.TestCase):
