@@ -188,7 +188,7 @@ pipeline {
 				       pip install coverage-badge
 				       pip install coverage
 		    		       pip install pytest-cov
-				       cd ${BUILDPATH}/Workspace/
+				       #cd ${BUILDPATH}/Workspace/
 		    		      #pytest --cov=${BUILDPATH}/Workspace/  --junitxml=./XmlReport/output.xml 
 				       python3 -m pytest --cov-report term --cov-report xml:coverage.xml --cov=${BUILDPATH}/Workspace/
                                        python -m coverage xml
