@@ -54,3 +54,5 @@ suite = unittest.TestLoader().loadTestsFromTestCase(TestNeudesicFrameworkFunctio
 runner = unittest.TextTestRunner(verbosity=100)
 results = runner.run(suite)
 print(results)
+if __name__ == '__main__':
+    unittest.main()
