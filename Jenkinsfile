@@ -18,7 +18,7 @@ pipeline {
     //NOTEBOOKPATH    = "${GITREPO}/Notebooks"
 	NOTEBOOKPATH    = "${GITREPO}"
 	
-    WORKSPACEPATH   = "/Demo-notebooks"               //"/Shared"
+    WORKSPACEPATH   = "/MDL-workspace"               //"/Shared"
    
     DBFSPATH        = "dbfs:/FileStore/"
     BUILDPATH       = "${WORKSPACE}/Builds/${env.JOB_NAME}-${env.BUILD_NUMBER}"
