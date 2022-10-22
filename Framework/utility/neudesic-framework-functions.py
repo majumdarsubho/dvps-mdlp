@@ -32,7 +32,7 @@
 
 # COMMAND ----------
 
-# MAGIC %sh pip install pyodbc
+#%sh pip install pyodbc
 
 # COMMAND ----------
 
@@ -475,48 +475,80 @@ def get_notebookName(notebookContext):
 
 # COMMAND ----------
 
+# def get_column_pk_list(primaryKeys_list):
+#   quotes = ["a.`"+c+"`" for c in primaryKeys_list]
+#   return ", ".join(quotes)
+
 def get_column_pk_list(primaryKeys_list):
-  quotes = ["a.`"+c+"`" for c in primaryKeys_list]
-  return ", ".join(quotes)
+    quotes = ["targetTable.`"+c+"`" for c in primaryKeys_list]
+    return ", ".join(quotes)
 
 # COMMAND ----------
 
+# def get_pk_on_clause(primaryKeys_list):
+#   quotes = ["a.`"+c+"`=b.`"+c+"`" for c in primaryKeys_list]
+#   return " and ".join(quotes)
+
 def get_pk_on_clause(primaryKeys_list):
-  quotes = ["a.`"+c+"`=b.`"+c+"`" for c in primaryKeys_list]
-  return " and ".join(quotes)
+    quotes = ["targetTable.`"+c+"`=sourceTable.`"+c+"`" for c in primaryKeys_list]
+    return " and ".join(quotes)
 
 # COMMAND ----------
 
 #Function to build Merge Statement. Merge deletes, updates and inserts
-def build_merge_SQL_Statement(deltaTableName,tableName,columns_list, primaryKeys_list, isDeleteEnabled, deleteFlagColumnName,scopeType):
-  def get_column_insert_list(columns_list):
-    quotes = ["`"+c+"`" for c in columns_list]
-    return ",".join(quotes)
-  def get_column_insert_values_list(columns_list, deltaTableName):
-    quotes = ["b.`"+c+"`" for c in columns_list]
-    return ",".join(quotes)
-  def get_column_update_clause(columns_list):
-    quotes = ["a.`"+c+"`= b.`"+c+"`" for c in columns_list]
-    return ",".join(quotes)
-  
-  column_insert_list = get_column_insert_list(columns_list)
-  column_insert_values_list = get_column_insert_values_list(columns_list, deltaTableName)
-  column_update_clause = get_column_update_clause(columns_list)
-  pk_on_clause = get_pk_on_clause(primaryKeys_list)
-  delete_flag_column_name = "b."+deleteFlagColumnName
-  
-  if isDeleteEnabled == True:
-    sql = """MERGE INTO {1} AS a USING {0} AS b ON {5}
-    WHEN MATCHED AND {6} = 1 THEN DELETE
-    WHEN MATCHED THEN UPDATE SET {4}
-    WHEN NOT MATCHED AND {6} = 0 THEN INSERT ({2}) VALUES({3})
-  """.format(deltaTableName,tableName,column_insert_list,column_insert_values_list,column_update_clause, pk_on_clause, delete_flag_column_name)
-  else:
-    sql = """MERGE INTO {1} AS a USING {0} AS b ON {5}
-    WHEN MATCHED THEN UPDATE SET {4}
-    WHEN NOT MATCHED THEN INSERT ({2}) VALUES({3})
-  """.format(deltaTableName,tableName,column_insert_list,column_insert_values_list,column_update_clause, pk_on_clause)
-  return sql
+def build_merge_SQL_Statement(sourceName,targetName,columns_list, primaryKeys_list, mode, deleteFlagColumnName,scopeType, sourceAdls,edwRowCreatedDateTimeName,edwRowModifiedDateTimeName):
+    CurrentDateTime=get_framework_current_datetime()
+    sqlMerge = """"""
+    sqlInsert = """"""
+    def get_column_insert_list(columns_list):
+        quotes=[]
+        quotes = ["`"+c+"`" for c in columns_list]
+        return ",".join(quotes)
+    def get_column_insert_values_list(columns_list):
+        quotes=[]
+        for c in columns_list:
+            if c==edwRowCreatedDateTimeName:
+                quotes.append("'"+str(CurrentDateTime)+"'" )
+            else:
+                quotes.append("sourceTable.`"+c+"`")
+        return ",".join(quotes)
+    def get_column_update_clause(columns_list):
+        quotes=[]
+        for c in columns_list:
+            if c==edwRowModifiedDateTimeName:
+                quotes.append("targetTable.`"+c+"`='"+str(CurrentDateTime)+"'" )
+            else:
+                quotes.append("targetTable.`"+c+"`= sourceTable.`"+c+"`" )
+        return ",".join(quotes)  
+    
+    column_insert_list = get_column_insert_list(columns_list)
+    column_insert_values_list = get_column_insert_values_list(columns_list)
+    column_update_clause = get_column_update_clause(columns_list)
+    pk_on_clause = get_pk_on_clause(primaryKeys_list)
+    delete_flag_column_name = "sourceTable."+deleteFlagColumnName
+    
+    if mode == 'merge':
+        sqlMerge = """MERGE INTO {1} AS targetTable USING {0} AS sourceTable ON {5}
+        WHEN MATCHED THEN UPDATE SET {4}
+        WHEN NOT MATCHED THEN INSERT ({2}) VALUES({3})
+        """.format(sourceName,targetName,column_insert_list,column_insert_values_list,column_update_clause, pk_on_clause, delete_flag_column_name)             
+    elif mode == 'append':        
+        sqlInsert = """INSERT INTO {1} ({2}) (SELECT {3} FROM {0} AS sourceTable)
+        """.format(sourceName,targetName,column_insert_list,column_insert_values_list,column_update_clause, pk_on_clause)
+    elif mode == 'keep history' and sourceAdls == 0:
+        sqlMerge = """MERGE INTO {1} AS targetTable USING {0} AS sourceTable ON {5} and targetTable.`expired_datetime` is null
+        WHEN MATCHED THEN UPDATE SET targetTable.`expired_datetime` = sourceTable.`effective_datetime` + INTERVAL 1 MINUTE, targetTable.`is_current` = 0
+        """.format(sourceName,targetName,column_insert_list,column_insert_values_list,column_update_clause, pk_on_clause)
+        sqlInsert = """INSERT INTO {1} ({2}) (SELECT {3} FROM {0} AS sourceTable)
+        """.format(sourceName,targetName,column_insert_list,column_insert_values_list,column_update_clause, pk_on_clause)
+    elif mode == 'keep history' and sourceAdls == 1:
+        sqlMerge = """MERGE INTO global_temp.{1} AS targetTable USING global_temp.{0} AS sourceTable ON {5} 
+        and targetTable.`effective_datetime` = sourceTable.`effective_datetime`
+        WHEN MATCHED THEN UPDATE SET targetTable.`expired_datetime` = sourceTable.`effective_datetime` + INTERVAL 1 MINUTE, targetTable.`is_current` = 0
+        WHEN NOT MATCHED THEN INSERT ({2}) VALUES({3})
+        """.format(sourceName,targetName,column_insert_list,column_insert_values_list,column_update_clause, pk_on_clause)
+        
+    return sqlMerge, sqlInsert
 
 # COMMAND ----------
 
@@ -604,19 +636,20 @@ def source_sink_metadata(CopyActivitySinkName, sourceType, targetType):
         queryResult = execute_framework_stored_procedure_with_results(sqlStatement,scopeType)
         queryResult = queryResult[0]
         resultMap['sql_script'] = queryResult[2]
-        resultMap['container_name'] = queryResult[4]
-        resultMap['landing_path'] = queryResult[5]        
-        resultMap['file_name'] = queryResult[6]
+        resultMap['targetFolderPath'] = queryResult[4]
+        resultMap['targetContainerName'] = queryResult[5]        
+        resultMap['targetFileName'] = queryResult[6]
     
     # if source is file and target is s3 bucket
     elif sourceType.lower() == 'file' and targetType.lower() == 'adls':
         sqlStatement = """EXEC dbo.uspGetCopyActivitySinkFileToADLS @CopyActivityName = {0};""".format(CopyActivitySinkName)
         queryResult = execute_framework_stored_procedure_with_results(sqlStatement,scopeType)
         queryResult = queryResult[0]
-       
-        resultMap['sourceFolderPath'] = queryResult[2]
-        resultMap['sourceFileName'] = queryResult[3]
-        resultMap['sourceFileType'] = queryResult[4]
+        
+        resultMap['sourceContainer'] = queryResult[2]
+        resultMap['sourceFolderPath'] = queryResult[3]
+        resultMap['sourceFileName'] = queryResult[4]
+        resultMap['sourceFileType'] = queryResult[5]
         resultMap['targetContainerName'] = queryResult[7]
         resultMap['targetFolderPath'] = queryResult[8]
         resultMap['targetFileName'] = queryResult[9]
@@ -693,11 +726,15 @@ def uspGenerateHydration():
 
 # COMMAND ----------
 
-def mount_s3(ACCESS_KEY,SECRET_KEY,s3_bucket_name,mount_path):
+def mount_s3(s3_bucket_name,mount_path):
+    import urllib
+    ACCESS_KEY = dbutils.secrets.get(scope = 'dpaframework', key = 'ACCESS_KEY')
+    SECRET_KEY = dbutils.secrets.get(scope = 'dpaframework', key = 'SECRET_KEY')
+    
     ACCESS_KEY = urllib.parse.quote(ACCESS_KEY, "")
     SECRET_KEY = urllib.parse.quote(SECRET_KEY, "")
     try :
-        dbutils.fs.mount(f"s3a://{ACCESS_KEY}:{SECRET_KEY}@{s3_bucket_name}","/mnt/external")
+        dbutils.fs.mount(f"s3a://{ACCESS_KEY}:{SECRET_KEY}@{s3_bucket_name}",mount_path)
         print("Mount Successful :" ,s3_bucket_name )
     except Exception as e:
         print("Mount Unsuccessful :",s3_bucket_name)
@@ -710,6 +747,42 @@ def unmount_s3(mount_path):
     dbutils.fs.unmount(mount_path)
     print("Unmounted : ", mount_path)
     
+
+# COMMAND ----------
+
+def check_mount(str_path):
+    if any(mount.mountPoint == str_path for mount in dbutils.fs.mounts()):
+        return True
+    else:
+        return False
+
+# COMMAND ----------
+
+def fileCopyWithRetry(file, path, maxRetries):
+    numRetries = 1
+    while True:
+        try:
+            x = dbutils.fs.cp(file,path)
+            return x
+        except Exception as e:
+            if numRetries > maxRetries:
+                raise e
+            else:
+                print ("Retrying error", e)
+                numRetries += 1
+
+# COMMAND ----------
+
+def populate_hive(hive_databaseName,tables_folder_path):
+    for files in dbutils.fs.ls(curated_path):
+        if(DeltaTable.isDeltaTable(spark, f'{files.path}')):
+            table_name = files.name.strip("/")
+            query = f"""CREATE OR REPLACE TABLE {hive_databaseName}.{table_name} AS SELECT * FROM delta.`{files.path}`"""
+            spark.sql(query)
+        else:
+            pass
+    print(f"Populated all tables for {hive_databaseName}")
+    return
 
 # COMMAND ----------
 
