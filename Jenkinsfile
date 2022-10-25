@@ -134,11 +134,11 @@ pipeline {
 			  #mkdir -p "${BUILDPATH}/Workspace/Framework"
 			  
 			  mkdir -p "${BUILDPATH}/Validation/Output"
-			  export PYTHONDONTWRITEBYTECODE=True
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  
 			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile' --exclude 'Jenkinsfile_2' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude 'XmlReport' --exclude '*_test.py' --exclude '.git' --exclude '.pytest_cache' --exclude '.scannerwork' --exclude 'coverage.xml' --exclude '*.pyc' ${WORKSPACE}/  ${BUILDPATH}/Workspace/
+			  find . -name "*.pyc" -exec rm -f {}
 			  rm -dr ${BUILDPATH}/Workspace/*/__pycache__
 			  rm -f  ${BUILDPATH}/Workspace/*/*_test.py
 			  #find ${BUILDPATH}/Workspace/*/ -name '__pycache__' -delete
