@@ -134,6 +134,7 @@ pipeline {
 			  #mkdir -p "${BUILDPATH}/Workspace/Framework"
 			  
 			  mkdir -p "${BUILDPATH}/Validation/Output"
+			  export PYTHONDONTWRITEBYTECODE=1
 			  #Get Modified Files
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  
