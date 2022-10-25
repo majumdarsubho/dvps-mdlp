@@ -138,7 +138,7 @@ pipeline {
 			  git diff --name-only --diff-filter=AMR HEAD^1 HEAD | xargs -I '{}' cp --parents -r '{}' ${BUILDPATH}
 			  
 			  sudo rsync -av --exclude 'Builds' --exclude 'Jenkinsfile' --exclude 'Jenkinsfile_2' --exclude 'miniconda' --exclude 'miniconda.sh' --exclude 'README.md' --exclude 'requirements.txt' --exclude 'XmlReport' --exclude '*_test.py' --exclude '.git' --exclude '.pytest_cache' --exclude '.scannerwork' --exclude 'coverage.xml' --exclude '*.pyc' ${WORKSPACE}/  ${BUILDPATH}/Workspace/
-			  rm -dr ${BUILDPATH}/Workspace/*/__pycache__
+			  #rm -dr ${BUILDPATH}/Workspace/*/__pycache__
 			  rm -f  ${BUILDPATH}/Workspace/*/*_test.py
 			  #find ${BUILDPATH}/Workspace/*/ -name '__pycache__' -delete
 			  
@@ -183,7 +183,7 @@ pipeline {
 				    """
 				    //sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=demo-project -Dsonar.projectVersion=0.0.3 -Dsonar.sources=${BUILDPATH} -Dsonar.host.url=http://107.20.71.233:9001 -Dsonar.login=ab9d8f9c15baff5428b9bf18b0ec198a5b35c6bb -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.sonar.inclusions=**/*.ipynb -Dsonar.exclusions=**/*.ini,**/*.py,**./*.sh"
                     		    
-				    sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=MDLPPipeline -Dsonar.projectVersion=0.0.3 -Dsonar.sources=${BUILDPATH}/Workspace/ -Dsonar.host.url=http://107.20.71.233:9001 -Dsonar.login=ab9d8f9c15baff5428b9bf18b0ec198a5b35c6bb -Dsonar.python.xunit.reportPath=tests/unit/junit.xml -Dsonar.python.coverage.reportPath=${WORKSPACE}/coverage.xml -Dsonar.python.coveragePlugin=cobertura -Dsonar.sonar.inclusions=**/*.ipynb,**/*.py -Dsonar.exclusions=**/*.ini,**/*_test.py,**./*.sh"  
+				    sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=MDLPPipeline -Dsonar.projectVersion=0.0.3 -Dsonar.sources=${BUILDPATH}/Workspace/ -Dsonar.host.url=http://107.20.71.233:9001 -Dsonar.login=ab9d8f9c15baff5428b9bf18b0ec198a5b35c6bb -Dsonar.python.xunit.reportPath=tests/unit/junit.xml -Dsonar.python.coverage.reportPath=${WORKSPACE}/coverage.xml -Dsonar.python.coveragePlugin=cobertura -Dsonar.sonar.inclusions=**/*.ipynb,**/*.py -Dsonar.exclusions=**/*.ini,**/*_test.py,${BUILDPATH}/Workspace/*/*_test.py,**./*.sh"  
 					
                                     sh ''' 
 				       pip install coverage-badge
