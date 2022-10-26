@@ -17,17 +17,9 @@ import re
 
 # COMMAND ----------
 
-# Parameters recieving from pipieline 
-relative_path  = "test/tables"
-container_name = "bronze"
-account_name   = "adlsentapp58081"
-# account_name   = "adlsentapp58082"
 pipeline_start_time = datetime.datetime.now()
-# filename = "task.parquet"
-filename = "opportunity.parquet"
-# filename = 'Account.parquet'
-sourcename ='salesforce'
 source_timezone = 'EST'
+filename = 'Vehicle'
 CopyActivitySinkKey = '1001'
 CopyActivityExecutionLogKey = '88'
 
@@ -106,33 +98,27 @@ def date_fileds_coversion(source_df):
 if __name__ == '__main__':
 
     param_dict = {}
-
-    parquet_folder_path = 'raw/' + sourcename + '/' + filename.split('.parquet')[0] +'/'+ 'original'
-    configure_folder_path = 'validations/' + sourcename 
-    configure_file_name = filename.split('.parquet')[0] + '.csv'
-    finalfile_path = 'raw/' + sourcename + '/' + filename.split('.parquet')[0] 
     print ('start source file read          :', datetime.datetime.now())
     # Read the source file and and load data into dataframe
-    source_file_df1 = spark.read.format('csv') \
+    raw_file_df = spark.read.format('csv') \
                                 .option('header',True)\
                                 .option('inferschema',True)\
                                 .option("delimiter", Delimiter)\
                                 .option("timestampFormat", "dd-MMM-yy hh.mm.ss.SSSSSSSSS a")\
                                 .load(SourcefilePath)
     print ('source file read done           :', datetime.datetime.now())
-
-    display(source_file_df1)
-    source_file_df = date_fileds_coversion(source_file_df1)
+    
     # Exit the notebook when there are no records in sourcefile
-    if source_file_df.count() == 0:
+    if raw_file_df.count() == 0:
         error_details = {}
         record_validation_table_dict = {}
-        error_details = {'Error' : 'No records in source file ', 'code' : '0', 'row_count' : source_file_df.count(),
-                         'col_count' : len(source_file_df.columns)}
+        error_details = {'Error' : 'No records in source file ', 'code' : '0', 'row_count' : raw_file_df.count(),
+                         'col_count' : len(raw_file_df.columns)}
         write_record_in_validation_table(param_dict,record_validation_table_dict,error_details)
-        mssparkutils.notebook.exit('Norecords')
+        dbutils.notebook.exit('Norecords')      
 
-    raw_input_df1 = source_file_df
+    source_file_df = date_fileds_coversion(raw_file_df)
+
     # Read the configure csv file and load data into dataframe
     print ('validation input csv read       :', datetime.datetime.now())
 #     config_file_df = get_file_data(param_dict, 'configure_parm')
@@ -146,6 +132,11 @@ if __name__ == '__main__':
     global_parm_df = spark.read.format('csv').option('header',True).option('inferschema',True).load(GlobalparametersfilePath)
     print ('global parameter cvs file done  :', datetime.datetime.now())
 
+    # Execlude the columns
+    columns_include_list = configure_file_df.filter(configure_file_df['include'] == 'Y').rdd.map(lambda x: x[0]).collect()
+    src_file_excl_cols_df = source_file_df.select(columns_include_list)
+ 
+    
     # Add raw_filename and ingest_datetime_utc columns
     process_file = filename + '_' + str(pipeline_start_time)
     source_file_df = source_file_df.withColumn('raw_filename' , F.lit(process_file)) \
@@ -162,11 +153,7 @@ if __name__ == '__main__':
     print('utc conversion end              :',datetime.datetime.now())
 
     # Data validations - column level
-    # Execlude the columns
-    columns_include_list = configure_file_df.filter(configure_file_df['include'] == 'Y').rdd.map(lambda x: x[0]).collect()
-    raw_input_df = raw_input_df1.select(columns_include_list)
-
-    data_val =  DataQualityFramework(raw_input_df,configure_file_df,converted_utc_df,global_parm_df)
+    data_val =  DataQualityFramework(raw_file_df,src_file_excl_cols_df,configure_file_df,converted_utc_df,global_parm_df)
     data_val.columns_validations()
     # record_validation_table_dict = data_val.columns_validations()
     print('column validations are done     :', datetime.datetime.now())
@@ -178,8 +165,6 @@ if __name__ == '__main__':
     # Write record in column validation delta file
     error_details= {}
     error_details = {'Error' : 'None', 'code' : '0', 'row_count' : raw_input_df.count(),'col_count' : len(raw_input_df.columns)}
-#     display(final_df)
-#     display(validate_delta_dict)
     write_record_in_validation_table(param_dict,validate_delta_dict,error_details,ValidationresultsfilePath)
     print ('validation delta file written   :' , datetime.datetime.now())
 
@@ -190,16 +175,13 @@ if __name__ == '__main__':
     path = UpdatedSourcefilePath.split(filename)[0] + '/'
     print(path)
     write_to_parquet(final_df, path, filename)
-#     print('new consolidate file path       :', final_path)
-#     print('new consolidate file path       :', UpdatedSourcefilePath)
-#     display(df1)
     print('new consolidate file written    :', datetime.datetime.now())
 
     # Exit the notebook with proper status
-    if (validate_delta_dict['StdDevErrors'] != None) or (validate_delta_dict['TimestampErrors'] == 'yes'):
-        dbutils.notebook.exit('thresholdfail')
-    else:
-        dbutils.notebook.exit('pass')
+#     if (validate_delta_dict['StdDevErrors'] != None) or (validate_delta_dict['TimestampErrors'] == 'yes'):
+#         dbutils.notebook.exit('thresholdfail')
+#     else:
+#         dbutils.notebook.exit('pass')
 
 
 # COMMAND ----------
@@ -211,5 +193,31 @@ display(Validationresults_df)
 
 # COMMAND ----------
 
-# config_file_df1 = spark.read.format('csv').option('header',True).option('inferschema',True).load(ValidationCSVfilePath)
-# display(config_file_df1)
+config_file_df1 = spark.read.format('csv').option('header',True).option('inferschema',True).load(ValidationCSVfilePath)
+display(config_file_df1)
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# # from pyspark.sql.functions import udf
+# check_dict = { "ROWID_OBJECT" : "[0-9][0-9][0-9][0-9][0-9][0-9][0-9]" , "CONSOLIDATION_IND" : "[A-C]"}
+
+# @udf("string")
+# def patterncheck_udf(value , column):
+#     pattern = str(check_dict[column])
+#     if re.match(pattern, str(value)) == None:
+#         status = 'yes'
+#     else:
+#         status = 'no'
+#     return status
+
+# df = raw_file_df.select([(when((  (patterncheck_udf(col(c), c) == 'yes' ) ),5 ).otherwise(0)
+#                                                 )
+#                                                 .alias(f"{c}_check5")  
+#                                                 for c in raw_file_df.columns                          
+#                                               ])
+
+# display(df)

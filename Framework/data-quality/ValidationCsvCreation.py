@@ -24,7 +24,7 @@ dbutils.fs.mounts()
 
 # COMMAND ----------
 
-dbutils.fs.ls("/mnt/dpa-hanv-dpdl-1-s3-reg-raw-0001/raw-zone/Location")
+#dbutils.fs.ls("/mnt/dpa-hanv-dpdl-1-s3-reg-raw-0001/raw-zone/Location")
 
 # COMMAND ----------
 
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     str_min_max_dict = {}
 
 #     data_val =  DataQualityFramework(source_df_aft_date,configure_file_df,converted_utc_df,global_parm_df)
-    data_val =  DataQualityFramework(source_file_df,configure_file_df,converted_utc_df,global_parm_df)
+    data_val =  DataQualityFramework(source_file_df1,source_file_df,configure_file_df,converted_utc_df,global_parm_df)
 
     missingpecent_column = data_val.get_empty_count_percentage()
     missingpercent_df = missing_percent_to_df(missingpecent_column)

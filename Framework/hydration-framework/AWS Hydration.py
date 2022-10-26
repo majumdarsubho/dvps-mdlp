@@ -94,17 +94,17 @@ for sheet in sheet_names:
 
 # COMMAND ----------
 
-conn = build_framework_sql_odbc_connection(frame_conn,scopeType)
-conn.autocommit = True
-coursor = conn.cursor()
-coursor.execute('EXEC dbo.uspGenerateHydration')
-# conn.close()
+# conn = build_framework_sql_odbc_connection(frame_conn,scopeType)
+# conn.autocommit = True
+# coursor = conn.cursor()
+# coursor.execute('EXEC dbo.uspGenerateHydration')
+# # conn.close()
 
 # COMMAND ----------
 
-# execsp = 'EXEC dbo.uspGenerateHydration'
-# execute_framework_stored_procedure_no_results(execsp, scopeType)
-# # conn.close()
+execsp = """EXEC dbo.uspGenerateHydration"""
+execute_framework_stored_procedure_no_results(execsp, scopeType)
+# conn.close()
 
 # COMMAND ----------
 

@@ -40,7 +40,7 @@ print(caSink)
 # Retrieving all path information
 def getSourceInfo(CopyActivitySink):
     sql = """EXEC.dbo.uspGetFileInfo 
-        @CopyActivitySinkName='{0}';""".format(CopyActivitySink)
+        @CopyActivitySink='{0}';""".format(CopyActivitySink)
     sp_exec = execute_framework_stored_procedure_with_results(sql,scopeType)
     return sp_exec[0]
 
@@ -91,9 +91,9 @@ else:
 
 (df.writeStream
     .format('delta')
-    .option('cloudFiles.schemaEvolutionMode', 'addNewColumns')
     .option('mergeSchema','true')
     .option('checkpointLocation',checkpointLocation)
     .outputMode('append')
+    .option('partitionBy', 'PU_LOC_CD')
     .option('path', s3TargetPath)
     .start())

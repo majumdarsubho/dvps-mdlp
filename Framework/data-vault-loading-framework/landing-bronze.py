@@ -34,7 +34,8 @@ from delta.tables import *
 # COMMAND ----------
 
 dbutils.widgets.text(name='curated', defaultValue="/mnt/curated", label='Curated Path')
-dbutils.widgets.text(name='metadata', defaultValue="/mnt/dpa-hertz/metadata/FrameworkHydration - Updated.xlsx", label='Metadata Path')
+dbutils.widgets.text(name='metadata', defaultValue="/FileStore/tables/FrameworkHydration.xlsx", label='Metadata Path')
+dbutils.widgets.text(name='source', defaultValue="RentalAgreement", label='Source')
 
 # COMMAND ----------
 
@@ -42,7 +43,7 @@ spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", True) #configr
 
 # COMMAND ----------
 
-source = "RentalAgreement"
+source = dbutils.widgets.get("source")
 curated_path = dbutils.widgets.get("curated")
 common_cols = ["Source","Silver_LoadDate","SourceRegion"]
 metadata_path = dbutils.widgets.get("metadata")
@@ -70,6 +71,19 @@ print(silver_checkpointLocation)
 
 # COMMAND ----------
 
+bronze_files = spark.read.format("com.crealytics.spark.excel") \
+            .option("header", "true") \
+            .option("inferSchema", "true") \
+            .option("treatEmptyValuesAsNulls", "false") \
+            .option("dataAddress","BronzeFiles"+"!A1") \
+            .load(metadata_path)
+
+# COMMAND ----------
+
+source_entity_list = list((bronze_files.where(f"Raw_Source = '{source}'").select("Table_Name").toPandas()['Table_Name']))
+
+# COMMAND ----------
+
 # DBTITLE 1,Read from Landing
 df_landing = (spark.readStream
                        .format('cloudFiles')
@@ -77,6 +91,10 @@ df_landing = (spark.readStream
                        .option('multiline','true')
                        .option('cloudFiles.schemaLocation', schemaLoc)
                        .load(landingPath))
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 

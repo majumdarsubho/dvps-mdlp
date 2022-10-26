@@ -19,10 +19,10 @@ from pyspark.sql import functions as sf
 
 class DataQualityFramework:
 
-    def __init__(self, source_file_df,configure_file_df,converted_utc_df,global_parm_df):
+    def __init__(self, raw_file_df, source_file_df,configure_file_df,converted_utc_df,global_parm_df):
+        self.raw_file_df = raw_file_df
         self.source_file_df = source_file_df
         self.configure_file_df = configure_file_df
-#         self.configure_file_df = configure_file_df.filter(configure_file_df['include'] == 'Y')
         self.converted_utc_df = converted_utc_df
         self.global_parm_df = global_parm_df
         self.str_min_max_dict = {}
@@ -39,14 +39,13 @@ class DataQualityFramework:
 
     def columns_count_validation(self):
         # columns count validation 
-
         error_details = {} 
         self.record_validation_table_dict = {} 
         if len(self.source_file_df.columns)  != self.configure_file_df.count():
             error_details = {'Error' : 'Columns count is not matched', 'code' : '1',
                              'row_count' : self.source_file_df.count(),'col_count' : len(self.source_file_df.columns)}
             write_record_in_validation_table(param_dict,self.record_validation_table_dict,error_details)
-            mssparkutils.notebook.exit('fail')
+            dbutils.notebook.exit('fail')
         return
 
     def coumns_datatype_validation(self):
@@ -63,7 +62,7 @@ class DataQualityFramework:
             error_details = {'Error' : 'Datatypes are not matched - ' + str(datatype_error_list), 'code' : '1' ,
                             'row_count' : self.source_file_df.count(),'col_count' : len(self.source_file_df.columns)}
             write_record_in_validation_table(param_dict,self.record_validation_table_dict,error_details)
-            mssparkutils.notebook.exit('fail')
+            dbutils.notebook.exit('fail')
         return
 
     def get_tablemissing_percent(self):
@@ -140,7 +139,8 @@ class DataQualityFramework:
                                'Median' : row['Median'],'Percentile25' : row['Percentile25'] ,'Percentile50' : row['Percentile50'] ,'Percentile75' : row['Percentile75'],
                                'MinValueCount' : row['MinValueCount'],'MaxValueCount' : row['MaxValueCount'] ,'UniqueValueCount' : row['UniqueValueCount'] ,
                                'MinValueLength' : row['MinValueLength'],'MaxValueLength' : row['MaxValueLength'],'ShouldBeUnique' : row['ShouldBeUnique'] ,
-                               'ShouldNotBeNull' : row['ShouldNotBeNull'],'ShouldMatchPattern' : row['ShouldMatchPattern'],'ShouldBeInList' : row['ShouldBeInList']
+                               'ShouldNotBeNull' : row['ShouldNotBeNull'],'ShouldMatchPattern' : row['ShouldMatchPattern'],'ShouldBeInList' : row['ShouldBeInList'],
+                               'Include' : row['Include']
                                }
                                 for row in self.configure_file_df.collect()}
     
@@ -248,10 +248,31 @@ class DataQualityFramework:
 #         display(unique_row_df)
         return unique_row_df
 
+#     @udf("string")
+#     def checkpattern_udf(value , column):
+#         pattern = self.configure_flags_dict[column]['ShouldMatchPattern']  
+#         print(pettern)
+#         if re.match(pattern, str(value)) == None:
+#             status = 'yes'
+#         else:
+#             status = 'no'
+#         return status
+#     def datapattern_validations(self):
+#         # data pattern validations for the columns which are defined the pattern in validations csv file.        
+#         datapattern_row_df = self.raw_file_df.select([(when((  (checkpattern_udf(col(c), c) == 'yes' ) ),5 ).otherwise(0)
+#                                                 )
+#                                                 .alias(f"{c}_check5")  
+#                                                 for c in self.raw_file_df.columns
+#                                                 if (self.configure_flags_dict[c]['ShouldMatchPattern'] != '') and (self.configure_flags_dict[c]['ShouldMatchPattern'] != 'null') and (self.configure_flags_dict[c]['Include'] == 'Y')
+#                                               ])
+        
+#         display(datapattern_row_df)           
+#         return datapattern_row_df
+
     def valueinlist_validations(self):
         # validation stddev for all numeric columns at row level 
              
-        valueinlist_row_df = self.source_file_df.select([(when((col(c).isin(list(self.configure_flags_dict[c]['ShouldBeInList'].split(","))) ) , 0 ).otherwise(4)
+        valueinlist_row_df = self.source_file_df.select([(when((col(c).isin(list(self.configure_flags_dict[c]['ShouldBeInList'].split("/"))) ) , 0 ).otherwise(4)
                                                 )
                                                 .alias(f"{c}_check4")  
                                                 for c in self.source_file_df.columns
@@ -259,6 +280,20 @@ class DataQualityFramework:
                                               ])
             
         return valueinlist_row_df
+    
+    def datapattern_validations(self):
+        """data pattern validations for the columns which are defined the pattern in validations csv file."""
+           
+        datapattern_row_df = self.raw_file_df.select([(when(( re.compile(self.configure_flags_dict[c]['ShouldMatchPattern']).match(str(col(c)) ) == None  ),5 ).otherwise(0)
+                                                )
+                                                .alias(f"{c}_check5")  
+                                                for c in self.raw_file_df.columns
+                                                if (self.configure_flags_dict[c]['ShouldMatchPattern'] != '') and (self.configure_flags_dict[c]['ShouldMatchPattern'] != 'null') and (self.configure_flags_dict[c]['Include'] == 'Y')
+                                              ])
+        
+        display(datapattern_row_df)
+            
+        return datapattern_row_df
     
     def create_results_dataframe(self, combined_df):
 
@@ -273,6 +308,7 @@ class DataQualityFramework:
             unique_cols = []
             notnull_cols = []
             valueinlist_cols = []
+            datapattern_cols = []
             for column in check_lst:
 #                 print (column, row[column])
                 org_col = column.split('_check')[0]
@@ -284,11 +320,14 @@ class DataQualityFramework:
                     unique_cols.append(org_col)
                 if row[column] == 4:
                     valueinlist_cols.append(org_col)
+                if row[column] == 5:
+                    datapattern_cols.append(org_col)
                     
-            validate_dict = {'Exceeded Dates Threshhold' : date_cols if date_cols else 'None' , 'Notnull Value Violation' : notnull_cols if notnull_cols else 'None' , 'Unique Value Violation' : unique_cols  if unique_cols else 'None'}
-# Value Violation' : unique_cols  if unique_cols else 'None', 'ValueInList Violation' : valueinlist_cols if valueinlist_cols else 'None'}
-            self.table_dict.update({'TimestampErrors' : 'yes' if date_cols else 'None'})
+            validate_dict = {'Exceeded Dates Threshhold' : date_cols if date_cols else 'None' , 'Notnull Value Violation' : notnull_cols if notnull_cols else 'None' , 
+                             'Unique Value Violation' : unique_cols  if unique_cols else 'None','ValueInList Violation' : valueinlist_cols if valueinlist_cols else 'None',
+                            'Datapattern Violation' : datapattern_cols if datapattern_cols else 'None'}
 
+            self.table_dict.update({'TimestampErrors' : 'yes' if date_cols else 'None'})
             validate_list.append(Row(validation_flag = str(validate_dict)))
         
         results = spark.createDataFrame(validate_list)
@@ -320,7 +359,7 @@ class DataQualityFramework:
                              ' but found ' + str(tablemissingpercent) +'%', 'code' : '1' , 'row_count' : self.source_file_df.count(),
                              'col_count' : len(self.source_file_df.columns)}
             write_record_in_validation_table(param_dict,record_validation_table_dict,error_details)
-            mssparkutils.notebook.exit('fail')
+            dbutils.notebook.exit('fail')
 
         print('Table missing percent done      :', datetime.datetime.now())
 
@@ -380,17 +419,21 @@ class DataQualityFramework:
         valueinlist_df = self.valueinlist_validations()
         print('value in list validation done   :', datetime.datetime.now())
         
+        datapattern_df = self.datapattern_validations()
+        print('datapattern validation done     :' , datetime.datetime.now())
         
         timestamp_df =timestamp_df.withColumn("timestamp_row_idx",row_number().over(Window.orderBy(monotonically_increasing_id())))
         unique_value_df = unique_value_df.withColumn("unique_row_idx",row_number().over(Window.orderBy(monotonically_increasing_id())))
         notnull_value_df = notnull_value_df.withColumn("notnull_row_idx",row_number().over(Window.orderBy(monotonically_increasing_id())))
         valueinlist_df = valueinlist_df.withColumn("valueinlist_row_idx",row_number().over(Window.orderBy(monotonically_increasing_id())))
+        datapattern_df = datapattern_df.withColumn("datapattern_row_idx",row_number().over(Window.orderBy(monotonically_increasing_id())))
 
-        
+        print(datapattern_df)  
         combined_df  = timestamp_df.join(unique_value_df,timestamp_df["timestamp_row_idx"] == unique_value_df["unique_row_idx"], 'LEFT' )\
                                    .join(notnull_value_df,timestamp_df["timestamp_row_idx"] == notnull_value_df["notnull_row_idx"], 'LEFT')\
                                    .join(valueinlist_df,timestamp_df["timestamp_row_idx"] == valueinlist_df["valueinlist_row_idx"], 'LEFT')\
-                                   .drop(*('timestamp_row_idx','unique_row_idx','notnull_row_idx','valueinlist_row_idx'))
+                                   .join(datapattern_df,timestamp_df["timestamp_row_idx"] == datapattern_df["datapattern_row_idx"], 'LEFT')\
+                                   .drop(*('timestamp_row_idx','unique_row_idx','notnull_row_idx','valueinlist_row_idx','datapattern_row_idx'))
                                     
         
 #         display(combined_df)
@@ -406,6 +449,6 @@ class DataQualityFramework:
         joined_df  = self.converted_utc_df.join(results_df,["row_idx"]).drop("row_idx")
         print ('main dataframe join   ended     :', datetime.datetime.now())
         
-#         display(joined_df)
+        display(joined_df)
         return joined_df, self.table_dict
 

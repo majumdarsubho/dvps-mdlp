@@ -1,4 +1,22 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC # DV-Functions
+# MAGIC 
+# MAGIC ## Overview
+# MAGIC 
+# MAGIC | Detail Tag | Information |
+# MAGIC |------------|-------------|
+# MAGIC |Originally Created By | [shourya.addepalli@neudesic.com](mailto:shourya.addepalli@neudesic.com)|
+# MAGIC |External References |[https://neudesic.com](https://neudesic.com) |
+# MAGIC <!-- |Input  |<ul><li> None |
+# MAGIC |Input Data Source |<ul><li>None | 
+# MAGIC |Output Data Source |<ul><li>global temporary view | -->
+# MAGIC 
+# MAGIC ## Other Details
+# MAGIC This notebook contains all the functions used by the Data Vault Loading Framework.
+
+# COMMAND ----------
+
 def read_hashkey_metadata(source,metadata_path):
     """
     -Read metadata into Dataframe for BK - > HK mapping
@@ -13,7 +31,7 @@ def read_hashkey_metadata(source,metadata_path):
     hash_df_list = dv_entity.toPandas()
     display(hash_df_list)
     dict_hash = hash_df_list.set_index('HashKey_Name').to_dict()
-    #get hashkey mapping to generate hash keys
+    # get Hash-key mapping to generate Hash Keys for a Source
     hk_bk_mapping_dict=dict_hash["hash_ready"] 
     return dv_entity,hk_bk_mapping_dict
 print("executed read_hashkey_metadata")
@@ -23,12 +41,12 @@ print("executed read_hashkey_metadata")
 def pre_processed_df(df,source):
     
     """ This function: 
-    -Remove "ARRAY" Columns in DF for RentalAgreement
+    -> Remove "ARRAY" Columns in DF for RentalAgreement and Also :
     1. RA - ZEROPAD(RART-RNT-AREA,5)+ZEROPAD(RART-RNT-LOC,3),
 	2. RA-ZEROPAD(RARN-RTRN-AREA,5)+ZEROPAD(RARN-RTRN-LOC,3)
 	3. RA-ZEROPAD(RARN-DUE-AREA,5)+ZEROPAD(RARN-DUE-LOC,3)
-	4. NPS - ZEROPAD(Area,5)+ZEROPAD(Location,3)
-	5. Location - ZEROPAD(LEGACY_REVENUE_AREA_NUMBER,5)+ZEROPAD( LGCY_REV_LOCATION_NUMBER,3)
+	-> NPS = ZEROPAD(Area,5)+ZEROPAD(Location,3)
+	-> Location = ZEROPAD(LEGACY_REVENUE_AREA_NUMBER,5)+ZEROPAD( LGCY_REV_LOCATION_NUMBER,3)
     """
     if source == "RentalAgreement": 
         array_columns=[]
@@ -58,7 +76,7 @@ print("executed cleaned_df")
 
 # COMMAND ----------
 
-def read_parquet_streaming(df,source,hk_bk_mapping_dict,dv_entity):
+def read_raw_streaming(df,source,hk_bk_mapping_dict,dv_entity):
     """ This function : 
     -Read parquet file for a Source
     -Remove " " from column names
@@ -68,17 +86,16 @@ def read_parquet_streaming(df,source,hk_bk_mapping_dict,dv_entity):
     -Add Columns : hashkeys,HashDIFF,HK(s),Source,LoadDate(current timestamp) 
     """
     system_columns = ["loadDate"]
-    columns_to_hash = list(set(df.columns) - set(system_columns))
     #remove spaces from column names,to write the df as delta in later stages.
     df = df.select([col(columns_).alias(columns_.replace(' ', '')) for columns_ in df.columns])
     
     # cleaned/transformed DF
     df = pre_processed_df(df,source)
-    
+    columns_to_hash = list(set(df.columns) - set(system_columns))
      #creating a copy of dict which will later be used for generating hashkeys
     original_hash_dict = dict(hk_bk_mapping_dict)
     
-    #get dict for generating hash keys,get dict for removing null from BK for all sources.
+    #get dict for removing null from BK for all sources.
     null_fill_dict = get_bk_fill_null(source,hk_bk_mapping_dict,dv_entity)
     
     #replace BK columns with 0
@@ -211,7 +228,7 @@ print("executed create_sat")
 
 def generate_dv_tables(df,source,common_cols,metadata_path,dv_entity,hk_bk_mapping_dict):
 
-    parent_df,all_columns = read_parquet_streaming(df,source,hk_bk_mapping_dict,dv_entity)
+    parent_df,all_columns = read_raw_streaming(df,source,hk_bk_mapping_dict,dv_entity)
 
     hub_df = create_hub(parent_df,source,common_cols,dv_entity)
 
@@ -302,6 +319,7 @@ def foreach_batch_function(df, epoch_id,source,metadata_path,common_cols,curated
         hub_df,link_df,sat_df =  generate_dv_tables(df,source,common_cols,metadata_path,dv_entity,hk_bk_mapping_dict)       
         
     try:
+        
         existing_hub_df = DeltaTable.forPath(spark, f"""{curated_path}/Hub_{source}""")  
 
         if source in ("LoyaltyCustomer","Vehicle","Location","VehicleGroup"):
@@ -312,14 +330,19 @@ def foreach_batch_function(df, epoch_id,source,metadata_path,common_cols,curated
             existing_sat_df =  DeltaTable.forPath(spark,f"""{curated_path}/Sat_{source}""")
 
         else:
+            
             existing_link_df = DeltaTable.forPath(spark, f"""{curated_path}/Link_{source}Association""")
-            existing_sat_df_pii =  DeltaTable.forPath(spark,f"""{curated_path}/{curated_path}/Sat_{source}_PII""")
-            existing_sat_df_non_pii =  DeltaTable.forPath(spark,f"""{curated_path}/{curated_path}/Sat_{source}_Non_PII""")
+            
+            existing_sat_df_pii =  DeltaTable.forPath(spark,f"""{curated_path}/Sat_{source}_PII""")
+            
+            existing_sat_df_non_pii =  DeltaTable.forPath(spark,f"""{curated_path}/Sat_{source}_Non_PII""")
+            
             existing_sat_assoc_df = DeltaTable.forPath(spark,f"""{curated_path}/Sat_{source}Association""")
            
     except Exception as e:
+        print(f"Silver table(s) do not exist yet for Source  : {source}")
         source_dv_entities = "Not Present"
-        print(f"Failed to read Silver table(s) for Source : {source}")
+        
     
     if source_dv_entities == "Not Present":
         print(f"Creating/Writing silver tables for Source : {source}")
